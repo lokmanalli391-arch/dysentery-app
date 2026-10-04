@@ -1,0 +1,97 @@
+১০.০৪ ১১:৫৮ AM
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>আমাশয় বৈজ্ঞানিক গাইডলাইন (অফলাইন-ফার্স্ট)</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div class="max-w-md mx-auto p-4 min-h-screen flex flex-col">
+        <!-- Header -->
+        <header class="bg-blue-600 text-white p-4 rounded-xl shadow-md mb-4 text-center">
+            <h1 class="text-xl font-bold">আমাশয় বৈজ্ঞানিক নির্দেশিকা</h1>
+            <p class="text-xs text-blue-100 mt-1">WHO ও পিয়ার-রিভিউড জার্নাল সমর্থিত</p>
+        </header>
+        <!-- Search & Update Bar -->
+        <div class="mb-4 flex gap-2">
+            <input type="text" id="searchInput" placeholder="আপনার প্রশ্ন বা বিষয় সার্চ করুন..." 
+                class="flex-1 p-3 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+            <button onclick="checkForUpdate()" class="bg-green-600 text-white px-4 py-2 rounded-xl text-xs font-semibold shadow hover:bg-green-700">
+                আপডেট চেক
+            </button>
+        </div>
+        <!-- Notification Box -->
+        <div id="noticeBox" class="hidden mb-4 p-3 bg-yellow-100 border-l-4 border-yellow-500 text-yellow-800 text-xs rounded">
+            প্রশ্নটি ডেটাবেজে নেই। এটি আপনার আনঅ্যানসারড বক্সে সংরক্ষিত হয়েছে। অ্যাপ আপডেট করলে উত্তর পেয়ে যাবেন।
+        </div>
+        <!-- Results Area -->
+        <div id="resultsArea" class="flex-1 space-y-4 overflow-y-auto">
+            <p class="text-center text-gray-400 text-sm mt-10">অনুগ্রহ করে ওপরের বক্সে সার্চ করুন।</p>
+        </div>
+    </div>
+    <script>
+        const GITHUB_JSON_URL = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO_NAME/main/dysentery.json"; // এখানে আপনার গিটহাবের র ফাইল লিংক বসাতে হবে
+        let appData = [];
+        // Load data from LocalStorage or GitHub on start
+        window.onload = async function() {
+            let localData = localStorage.getItem('dysentery_data');
+            if (localData) {
+                appData = JSON.parse(localData);
+            } else {
+                await checkForUpdate();
+            }
+        }
+        // Search Logic
+        document.getElementById('searchInput').addEventListener('input', function(e) {
+            let query = e.target.value.toLowerCase().trim();
+            let resultsArea = document.getElementById('resultsArea');
+            let noticeBox = document.getElementById('noticeBox');
+            resultsArea.innerHTML = '';
+            if (query.length === 0) {
+                resultsArea.innerHTML = '<p class="text-center text-gray-400 text-sm mt-10">অনুগ্রহ করে ওপরের বক্সে সার্চ করুন।</p>';
+                noticeBox.classList.add('hidden');
+                return;
+            }
+            let filtered = appData.filter(item => 
+                item.question.toLowerCase().includes(query) || 
+                item.answer.toLowerCase().includes(query)
+            );
+            if (filtered.length > 0) {
+                noticeBox.classList.add('hidden');
+                filtered.forEach(item => {
+                    resultsArea.innerHTML += `
+                        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+                            <span class="text-[10px] bg-blue-100 text-blue-700 px-2 py-0.5 rounded font-bold">${item.category}</span>
+                            <h3 class="font-bold text-sm mt-2 text-blue-900">${item.question}</h3>
+                            <p class="text-xs text-gray-600 mt-1 leading-relaxed">${item.answer}</p>
+                            <div class="mt-3 pt-2 border-t text-[11px] text-gray-500 flex justify-between items-center">
+                                <span> ${item.source}</span>
+                                <span class="bg-gray-100 px-1.5 py-0.5 rounded font-mono text-[10px]">DOI: ${item.doi}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+            } else {
+                noticeBox.classList.remove('hidden');
+                resultsArea.innerHTML = '<p class="text-center text-gray-500 text-sm mt-4">কোনো মিল পাওয়া যায়নি।</p>';
+            }
+        });
+        // Update Function (Fetch from GitHub)
+        async function checkForUpdate() {
+            try {
+                let response = await fetch(GITHUB_JSON_URL);
+                let data = await response.json();
+                appData = data.questions_list;
+                localStorage.setItem('dysentery_data', JSON.stringify(appData));
+                alert('অ্যাপ সফলভাবে আপডেট হয়েছে!');
+            } catch (error) {
+                alert('ইন্টারনেট সংযোগ চেক করুন অথবা গিটহাব লিংক নিশ্চিত করুন।');
+            }
+        }
+    </script>
+</body>
+</html>
+
